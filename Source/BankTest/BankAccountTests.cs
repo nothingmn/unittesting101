@@ -132,5 +132,50 @@ namespace BankTest
             Assert.AreEqual(expected, actual, 0.01, "Account balance is not correct");
 
         }
+
+        [Test]
+        public void DebitAccount_WriteToFile_ThenRead()
+        {
+            // arrange
+            double beginningBalance = 11.99;
+            double debitAmount = 4.55;
+            double expected = 7.44;
+            BankAccount account = new BankAccount("Mr. Bryan Walton", beginningBalance);
+            account.Debit(debitAmount);
+
+            // act
+            IFileWriter writer = new FileWriter();
+            BankAccountWriter baw = new BankAccountWriter(writer);
+            baw.WriteAccount(account);            
+
+            // assert
+            var readAccount = baw.ReadAccount(account.Name);
+            Assert.AreEqual(readAccount.Balance, account.Balance);
+            Assert.AreEqual(readAccount.Name, account.Name);
+        }
+
+        [Test]
+        public void DebitAccount_WriteToFile_ThenRead_Mocked()
+        {
+            // arrange
+            double beginningBalance = 11.99;
+            double debitAmount = 4.55;
+            double expected = 7.44;
+            BankAccount account = new BankAccount("Mr. Bryan Walton", beginningBalance);
+            account.Debit(debitAmount);
+
+            // act
+            var writer = new Moq.Mock<IFileWriter>();
+            writer.Setup(w => w.Write(Moq.It.IsAny<string>(), Moq.It.IsAny<string>()));
+            writer.Setup(w => w.Read(Moq.It.IsAny<string>())).Returns(String.Format("{0}|{1}", account.Name, account.Balance));
+
+            BankAccountWriter baw = new BankAccountWriter(writer.Object);
+            baw.WriteAccount(account);
+
+            // assert
+            var readAccount = baw.ReadAccount(account.Name);
+            Assert.AreEqual(readAccount.Balance, account.Balance);
+            Assert.AreEqual(readAccount.Name, account.Name);
+        }
     }
 }
